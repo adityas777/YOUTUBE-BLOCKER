@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hybrid Ad-Blocker Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: hsl(225, 25%, 8%);
+      --bg-card: hsl(224, 24%, 12%);
+      --bg-input: hsl(223, 23%, 16%);
+      --primary: hsl(250, 89%, 66%);
+      --primary-hover: hsl(250, 89%, 60%);
+      --danger: hsl(0, 84%, 60%);
+      --success: hsl(142, 70%, 45%);
+      --text-main: hsl(210, 40%, 98%);
+      --text-muted: hsl(215, 16%, 65%);
+      --border: hsl(224, 20%, 20%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      width: 320px;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      padding: 1rem;
+      border: 1px solid var(--border);
+      overflow-x: hidden;
+    }
+
+    /* Header Section */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, hsl(250, 89%, 75%), hsl(280, 89%, 70%));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.3rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      background-color: hsla(142, 70%, 45%, 0.1);
+      color: var(--success);
+      border: 1px solid hsla(142, 70%, 45%, 0.2);
+    }
+
+    .status-badge.offline {
+      background-color: hsla(0, 84%, 60%, 0.1);
+      color: var(--danger);
+      border: 1px solid hsla(0, 84%, 60%, 0.2);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background-color: currentColor;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--primary);
+      opacity: 0.4;
+    }
+
+    .stat-card.blocked::after {
+      background: var(--danger);
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .stat-rate {
+      grid-column: span 2;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-rate .stat-value {
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    /* Actions Section */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.disabled {
+      background-color: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      background-color: hsla(250, 89%, 66%, 0.1);
+      border: 1px solid hsla(250, 89%, 66%, 0.2);
+      color: hsl(250, 89%, 80%);
+      text-align: center;
+      display: none;
+    }
+
+    /* Logs list */
+    .logs-header {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logs-list {
+      max-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      background-color: var(--bg-card);
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px dotted var(--border);
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .log-host {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .log-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .log-badge.dns {
+      background-color: hsla(250, 89%, 66%, 0.15);
+      color: hsl(250, 89%, 75%);
+    }
+
+    .log-badge.dpi {
+      background-color: hsla(0, 84%, 60%, 0.15);
+      color: hsl(0, 84%, 75%);
+    }
+
+    .no-logs {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+      padding: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>Ad-Blocker Helper</h1>
+      <p>Local Companion Client</p>
+    </div>
+    <div class="status-badge" id="status-badge">
+      <div class="status-dot"></div>
+      <span id="status-text">Checking</span>
+    </div>
+  </header>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Queries</span>
+      <span class="stat-value" id="stat-total">0</span>
+    </div>
+    <div class="stat-card blocked">
+      <span class="stat-label">Blocked</span>
+      <span class="stat-value" id="stat-blocked" style="color: var(--danger);">0</span>
+    </div>
+    <div class="stat-card stat-rate">
+      <span class="stat-label">Blocked Rate</span>
+      <span class="stat-value" id="stat-rate">0.00%</span>
+    </div>
+  </section>
+
+  <section class="actions">
+    <button id="btn-block-yt" class="disabled">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2z"></path>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+      </svg>
+      Block YouTube Ad Streams
+    </button>
+    <div id="alert-msg" class="alert"></div>
+  </section>
+
+  <div class="logs-header">
+    <span>Recent Blocks</span>
+  </div>
+  <div class="logs-list" id="logs-list">
+    <div class="no-logs">Connecting to server...</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

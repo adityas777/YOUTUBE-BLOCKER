@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid DNS & DPI Ad-Blocker Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0d0e15;
+            --bg-card: #151824;
+            --bg-input: #1f2335;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #292e42;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-section p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-value.blocked {
+            color: var(--danger);
+        }
+
+        .stat-value.total {
+            color: var(--primary);
+        }
+
+        /* Form styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        input[type="text"] {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            background-color: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+        }
+
+        /* Table styling */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-blocked {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .no-data {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 2rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <h1>Hybrid DNS & DPI Ad-Blocker</h1>
+                <p>Real-Time Packet Inspection and DNS Redirection Dashboard</p>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                SYSTEM ACTIVE
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Left Column: Controls & Stats -->
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-title">Extract YouTube Domains</div>
+                    <form method="POST">
+                        <input type="text" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
+                        <button type="submit">Block Ad Streams</button>
+                    </form>
+                    {% if message %}
+                    <div class="alert">{{ message }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="card">
+                    <div class="card-title">DNS Resolution Stats</div>
+                    <div class="stats-group">
+                        <div class="stat-card">
+                            <span class="stat-label">Total DNS Queries</span>
+                            <span class="stat-value total" id="dns-total">{{ stats.total_queries }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">DNS Queries Blocked</span>
+                            <span class="stat-value blocked" id="dns-blocked">{{ stats.blocked_queries }}</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">DNS Block Rate</span>
+                            <span class="stat-value" id="dns-rate">
+                                {% if stats.total_queries > 0 %}
+                                    {{ "%.2f" | format(stats.blocked_queries / stats.total_queries * 100) }}%
+                                {% else %}
+                                    0.00%
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Logs -->
+            <div class="main-content">
+                <div class="card" style="min-height: 480px;">
+                    <div class="card-title">
+                        Live Deep Packet Inspection Logs (TLS SNI)
+                        <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-secondary);">Auto-refreshes every 5s</span>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Target Hostname (SNI)</th>
+                                    <th>Destination IP</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                             <tbody id="logs-body">
+                                {% if dpi_logs %}
+                                    {% for log in dpi_logs %}
+                                    <tr>
+                                        <td style="color: var(--text-secondary);">{{ log.timestamp }}</td>
+                                        <td style="font-weight: 500;">{{ log.sni }}</td>
+                                        <td style="font-family: monospace;">{{ log.ip }}</td>
+                                        <td>
+                                            {% if log.ip == '0.0.0.0' or 'DNS' in log.ip %}
+                                                <span class="badge-blocked" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2);">DNS SINKHOLE</span>
+                                            {% else %}
+                                                <span class="badge-blocked">IP BLOCKED</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="no-data">Waiting for matching SNI packet traffic...</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update stats and logs via AJAX
+        function refreshData() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Update DNS Stats
+                    const stats = data.stats;
+                    document.getElementById('dns-total').textContent = stats.total_queries;
+                    document.getElementById('dns-blocked').textContent = stats.blocked_queries;
+                    
+                    let rate = 0;
+                    if (stats.total_queries > 0) {
+                        rate = (stats.blocked_queries / stats.total_queries * 100).toFixed(2);
+                    }
+                    document.getElementById('dns-rate').textContent = rate + '%';
+
+                    // Update DPI Logs
+                    const logs = data.dpi_logs;
+                    const tbody = document.getElementById('logs-body');
+                    
+                    if (logs.length > 0) {
+                        tbody.innerHTML = '';
+                        logs.forEach(log => {
+                            const tr = document.createElement('tr');
+                            const isDns = log.ip === '0.0.0.0' || log.ip.includes('DNS');
+                            const badge = isDns 
+                                ? `<span class="badge-blocked" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2);">DNS SINKHOLE</span>`
+                                : `<span class="badge-blocked">IP BLOCKED</span>`;
+                            tr.innerHTML = `
+                                <td style="color: var(--text-secondary);">${log.timestamp}</td>
+                                <td style="font-weight: 500;">${log.sni}</td>
+                                <td style="font-family: monospace;">${log.ip}</td>
+                                <td>${badge}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="no-data">Waiting for matching SNI packet traffic...</td>
+                            </tr>
+                        `;
+                    }
+                })
+                .catch(error => console.error('Error fetching dashboard stats:', error));
+        }
+
+        // Poll every 5 seconds
+        setInterval(refreshData, 5000);
+    </script>
+</body>
+</html>

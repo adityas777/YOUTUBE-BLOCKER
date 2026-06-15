@@ -1,0 +1,26 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Runtime logs, stats, and capture files
+dns_stats.json
+dpi_log.txt
+*.pcap
+
+# Compiled outputs
+*.exe
+*.o
+*.obj
+build/
+
+# Dynamic DLL copies
+/Packet.dll
+/libgcc_s_seh-1.dll
+/libpcap.dll
+/libstdc++-6.dll
+/libwinpthread-1.dll
+/wpcap.dll
+
+# Temporary/junk files
+NUL
+query
